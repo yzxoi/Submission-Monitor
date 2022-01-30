@@ -2,11 +2,8 @@
 # encoding: utf-8
 
 import requests
-import random
 import time
 import json
-import datetime
-import sys
 
 GETFREQ = 300
 MAXCOUNT = 50
