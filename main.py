@@ -104,13 +104,13 @@ def GetCodeforces(now):
 				submission.append("https://codeforces.com/problemset/problem/"+str(i['problem']['contestId'])+"/"+i['problem']['index'])
 				submission.append(g_user)
 				if (i['timeConsumedMillis']):
-					submission.append(str(i['timeConsumedMillis'])+"ms")
+					submission.append(str(i['timeConsumedMillis'])+" ms")
 				else:
-					submission.append("")
+					submission.append("0 ms")
 				if(i['memoryConsumedBytes']):
-					submission.append(str(int(i['memoryConsumedBytes']/1024/1024)) + "MB")
+					submission.append(str(int(i['memoryConsumedBytes']/1024/1024)) + " MB")
 				else:
-					submission.append("")
+					submission.append("0 MB")
 				submission.append(i['programmingLanguage'])
 				submission.append("https://codeforces.com/problemset/submission/"+str(i['author']['contestId'])+"/"+str(i['id']))
 				submission.append(i['creationTimeSeconds'])
