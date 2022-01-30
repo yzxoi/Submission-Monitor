@@ -167,7 +167,6 @@ def GetIconName(status):
 		return "error"
 
 def GetUserColor(status):
-	print(status)
 	if(status == "candidate master"):
 		return "#a0a"
 	elif(status == "master"):
