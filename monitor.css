@@ -22,7 +22,7 @@ a {
 }
 
 .container {
-    max-width: 1380px;
+    max-width: 90%;
     margin-left: auto;
     margin-right: auto;
     padding: 0 10px
@@ -34,7 +34,7 @@ a {
 }
 
 .header-container {
-    max-width: 1380px;
+    max-width: 90%;
     margin-left: auto;
     margin-right: auto;
     padding: 0 30px
