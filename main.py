@@ -11,6 +11,7 @@ GETFREQ = 300
 MAXCOUNT = 50
 SMAX = 100
 GETTIMEOUT = 20
+GETERRORFREQ = 5
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"
 
 # with open('cookies.json', 'r') as cookiesjson:
@@ -31,25 +32,29 @@ if len(user) == 0:
 submissions = []
 
 def GetCFUser(handle):
-	global cnt, lastGet, MAXCOUNT, UA, GETTIMEOUT
-	try:
-		getheader = {
-			"user-agent": UA
-		}
-		response = requests.get("http://codeforces.com/api/user.info?handles=" + str(handle), headers = getheader, timeout = GETTIMEOUT)
-	except:
-		print("Get Codeforces User failed.")
-		return []
-	else:
-		data = json.loads(response.text)
-		if (data['status'] != "OK"):
-			print("Response Status Error");
-			quit()
-		for i in data['result']:
-			t_user = []
-			t_user.append(i['handle'])
-			t_user.append(i['rank'])
-		return t_user
+	global cnt, lastGet, MAXCOUNT, UA, GETTIMEOUT, GETERRORFREQ
+	flg = 0
+	while flg == 0:
+		try:
+			getheader = {
+				"user-agent": UA
+			}
+			response = requests.get("http://codeforces.com/api/user.info?handles=" + str(handle), headers = getheader, timeout = GETTIMEOUT)
+			flg = 1
+		except:
+			print("Get Codeforces User failed, retrying...")
+			time.sleep(GETERRORFREQ)
+	while True:
+		try:
+			data = json.loads(response.text)
+			for i in data['result']:
+				t_user = []
+				t_user.append(i['handle'])
+				t_user.append(i['rank'])
+			return t_user
+		except:
+			print("Response Status Error, retrying...")
+			time.sleep(GETERRORFREQ)
 
 def GetCodeforces(now):
 	global cnt, lastGet, MAXCOUNT, UA, GETTIMEOUT
@@ -267,43 +272,41 @@ def Sort(l,r):
         rk[i+l]=stk[i]
 
 lastGet = 0
-while True:
-	if (time.time() - lastGet > GETFREQ):
-		with open("index.html", "w", encoding="utf-8") as file:
-			submissions = []
-			for i in range(0,len(user)):
-				if (user[i]['type'] == 'codeforces'):
-					GetCodeforces(user[i])
-				elif (user[i]['type'] == 'uoj'):
-					GetUOJ(user[i],1)
-					GetUOJ(user[i],2)
-					GetUOJ(user[i],3)
-			rk = []
-			for i in range(0,len(submissions)):
-				rk.append(i)
-			Sort(0,len(submissions)-1)
-			file.write('<!DOCTYPE html><html><head><meta http-equiv="refresh" content="300"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Submission Monitor</title><link rel="shortcut icon" href="./favicon.ico" type="image/x-icon"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdui@1.0.2/dist/css/mdui.min.css" /><link rel="stylesheet" href="monitor.css" /></head><body><div id="app"><div id="header"><div class="header-container"><div class="title">提交记录监视器<div class="subtitle">Submission Monitor</div></div></div></div><div id="monitor" class="container item mdui-card"><div class="mdui-table-fluid"><table class="mdui-table mdui-table-hoverable"><thead><tr><th>平台</th><th>状态</th><th>分数</th><th>题目</th><th>提交者</th><th>用时</th><th>内存</th><th>答案</th><th>提交时间</th></tr></thead><tbody>')
-			for j in range(0,min(SMAX,len(submissions))):
-				i=submissions[rk[j]]
-				if (i[0]=='Codeforces'):
-					file.write('<tr>')
-					file.write('<td><a href="https://codeforces.com/"><img src="./Codeforces.png" /> Codeforces</a></td>')
-					file.write('<td><a style="color:' + GetColor(i[2]) + ';vertical-align: middle;" href="' + i[10] + '"><i class="mdui-icon material-icons" style="height: 26px;">' + GetIconName(i[2]) + '</i> ' + i[2] + '</a></td>')
-					file.write('<td><span style="color:' + GetScoreColor(i[3]) + ';">' + i[3] + '</span></td><td><a style="color:#4183c4;" href="' + i[5] + '">' + i[4] + '</td>')
-					if(i[6][1] == "legendary grandmaster"):
-						file.write('<td><a href="https://codeforces.com/profile/' + i[6][0] + '">' + '<span style="color:black;">' + i[6][0][0] + '</span>' + '<span style="color:red;">' + i[6][0][1:] + '</span>' + '</a></td>')
-					else:
-						file.write('<td><a href="https://codeforces.com/profile/' + i[6][0] + '" style="color:' + GetUserColor(i[6][1]) + ';">' + i[6][0] + '</a></td>')
-					file.write('<td>' + i[7] + '</td><td>' + i[8] + '</td><td><span>' + i[9] + '</spane></td><td>' + GetTime(i[11]) + '</td>')
-					file.write('</tr>')
-				elif (i[0]=='UOJ'):
-					file.write('<tr>')
-					file.write('<td><a href="https://uoj.ac/"><img style="height:16px;" src="./UOJ.png" /> UOJ</a></td>')
-					file.write('<td><a style="color:' + GetColor(i[2]) + ';vertical-align: middle;" href="' + i[10] + '"><i class="mdui-icon material-icons" style="height: 26px;">' + GetIconName(i[2]) + '</i> ' + i[2] + '</a></td>')
-					file.write('<td><span style="color:' + GetScoreColor(i[3]) + ';">' + i[3] + '</span></td><td><a style="color:#4183c4;" href="' + i[5] + '">' + i[4] + '</td>')
-					file.write('<td><a style="color:rgb(75, 175, 178);" href="https://uoj.ac/user/profile/' + str(i[6]) + '">' + str(i[6]) + '</a></td>')
-					file.write('<td>' + i[7] + '</td><td>' + i[8] + '</td><td><span>' + i[9] + '</spane></td><td>' + GetTime(i[11]) + '</td>')
-					file.write('</tr>')
-			file.write('</tbody></table></div></div><div id="footer"><div class="container"><p>Powered By <a href="https://github.com/yzxoi/Submission-Monitor" target="_blank" rel="noopener noreferrer">yzxoi Submission Monitor</a></p></div></div></div><script src="https://cdn.jsdelivr.net/npm/mdui@1.0.2/dist/js/mdui.min.js"></script></body></html>')
-			file.close()
-			print("done")
+with open("index.html", "w", encoding="utf-8") as file:
+	submissions = []
+	for i in range(0,len(user)):
+		if (user[i]['type'] == 'codeforces'):
+			GetCodeforces(user[i])
+		elif (user[i]['type'] == 'uoj'):
+			GetUOJ(user[i],1)
+			GetUOJ(user[i],2)
+			GetUOJ(user[i],3)
+	rk = []
+	for i in range(0,len(submissions)):
+		rk.append(i)
+	Sort(0,len(submissions)-1)
+	file.write('<!DOCTYPE html><html><head><meta http-equiv="refresh" content="300"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Submission Monitor</title><link rel="shortcut icon" href="./favicon.ico" type="image/x-icon"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdui@1.0.2/dist/css/mdui.min.css" /><link rel="stylesheet" href="monitor.css" /></head><body><div id="app"><div id="header"><div class="header-container"><div class="title">提交记录监视器<div class="subtitle">Submission Monitor</div></div></div></div><div id="monitor" class="container item mdui-card"><div class="mdui-table-fluid"><table class="mdui-table mdui-table-hoverable"><thead><tr><th>平台</th><th>状态</th><th>分数</th><th>题目</th><th>提交者</th><th>用时</th><th>内存</th><th>答案</th><th>提交时间</th></tr></thead><tbody>')
+	for j in range(0,min(SMAX,len(submissions))):
+		i=submissions[rk[j]]
+		if (i[0]=='Codeforces'):
+			file.write('<tr>')
+			file.write('<td><a href="https://codeforces.com/"><img src="./Codeforces.png" /> Codeforces</a></td>')
+			file.write('<td><a style="color:' + GetColor(i[2]) + ';vertical-align: middle;" href="' + i[10] + '"><i class="mdui-icon material-icons" style="height: 26px;">' + GetIconName(i[2]) + '</i> ' + i[2] + '</a></td>')
+			file.write('<td><span style="color:' + GetScoreColor(i[3]) + ';">' + i[3] + '</span></td><td><a style="color:#4183c4;" href="' + i[5] + '">' + i[4] + '</td>')
+			if(i[6][1] == "legendary grandmaster"):
+				file.write('<td><a href="https://codeforces.com/profile/' + i[6][0] + '">' + '<span style="color:black;">' + i[6][0][0] + '</span>' + '<span style="color:red;">' + i[6][0][1:] + '</span>' + '</a></td>')
+			else:
+				file.write('<td><a href="https://codeforces.com/profile/' + i[6][0] + '" style="color:' + GetUserColor(i[6][1]) + ';">' + i[6][0] + '</a></td>')
+			file.write('<td>' + i[7] + '</td><td>' + i[8] + '</td><td><span>' + i[9] + '</spane></td><td>' + GetTime(i[11]) + '</td>')
+			file.write('</tr>')
+		elif (i[0]=='UOJ'):
+			file.write('<tr>')
+			file.write('<td><a href="https://uoj.ac/"><img style="height:16px;" src="./UOJ.png" /> UOJ</a></td>')
+			file.write('<td><a style="color:' + GetColor(i[2]) + ';vertical-align: middle;" href="' + i[10] + '"><i class="mdui-icon material-icons" style="height: 26px;">' + GetIconName(i[2]) + '</i> ' + i[2] + '</a></td>')
+			file.write('<td><span style="color:' + GetScoreColor(i[3]) + ';">' + i[3] + '</span></td><td><a style="color:#4183c4;" href="' + i[5] + '">' + i[4] + '</td>')
+			file.write('<td><a style="color:rgb(75, 175, 178);" href="https://uoj.ac/user/profile/' + str(i[6]) + '">' + str(i[6]) + '</a></td>')
+			file.write('<td>' + i[7] + '</td><td>' + i[8] + '</td><td><span>' + i[9] + '</spane></td><td>' + GetTime(i[11]) + '</td>')
+			file.write('</tr>')
+	file.write('</tbody></table></div></div><div id="footer"><div class="container"><p>Powered By <a href="https://github.com/yzxoi/Submission-Monitor" target="_blank" rel="noopener noreferrer">yzxoi Submission Monitor</a></p></div></div></div><script src="https://cdn.jsdelivr.net/npm/mdui@1.0.2/dist/js/mdui.min.js"></script></body></html>')
+	file.close()
+	print("done")
