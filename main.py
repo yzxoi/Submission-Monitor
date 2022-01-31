@@ -33,19 +33,12 @@ submissions = []
 
 def GetCFUser(handle):
 	global cnt, lastGet, MAXCOUNT, UA, GETTIMEOUT, GETERRORFREQ
-	flg = 0
-	while flg == 0:
+	while True:
 		try:
 			getheader = {
 				"user-agent": UA
 			}
-			response = requests.get("http://codeforces.com/api/user.info?handles=" + str(handle), headers = getheader, timeout = GETTIMEOUT)
-			flg = 1
-		except:
-			print("Get Codeforces User failed, retrying...")
-			time.sleep(GETERRORFREQ)
-	while True:
-		try:
+			response = requests.get("http://codeforces.com/api/user.info?handles=" + str(handle), headers = getheader, timeout = GETTIMEOUT,verify=False)
 			data = json.loads(response.text)
 			for i in data['result']:
 				t_user = []
@@ -53,21 +46,19 @@ def GetCFUser(handle):
 				t_user.append(i['rank'])
 			return t_user
 		except:
-			print("Response Status Error, retrying...")
+			print("Get Codeforces User failed, retrying...")
 			time.sleep(GETERRORFREQ)
 
 def GetCodeforces(now):
 	global cnt, lastGet, MAXCOUNT, UA, GETTIMEOUT
 	lastGet = time.time()
-	try:
-		getheader = {
-			"user-agent": UA
-		}
-		response = requests.get("http://codeforces.com/api/user.status" + "?handle=" + str(now['handle']) + "&from=1" + "&count=" + str(MAXCOUNT), headers = getheader, timeout = GETTIMEOUT)
-	except:
-		print("Get Codeforces Status failed.")
-	else:
-		# try:
+	while True:
+		try:
+			getheader = {
+				"user-agent": UA
+			}
+			response = requests.get("http://codeforces.com/api/user.status" + "?handle=" + str(now['handle']) + "&from=1" + "&count=" + str(MAXCOUNT), headers = getheader, timeout = GETTIMEOUT,verify=False)
+			print("GET CF for " + now['handle'])
 			data = json.loads(response.text)
 			if (data['status'] != "OK"):
 				print("Response Status Error:" + data['status'] + "; Response Result:" + data['result']);
@@ -121,58 +112,61 @@ def GetCodeforces(now):
 				submission.append(i['creationTimeSeconds'])
 
 				submissions.append(submission)
-				# file.write(str(i))
-		# except:
-		# 	print('Get Codeforces Response Parse Error.')
+			return 
+		except:
+			print("Get Codeforces Status failed, retrying...")
+			time.sleep(GETERRORFREQ)
 
 def GetUOJ(now,page):
 	global cnt, lastGet, MAXCOUNT, UA, GETTIMEOUT, submissions
 	lastGet = time.time()
-	try:
-		getheader = {
-			"user-agent": UA
-		}
-		response = requests.get("https://uoj.ac/submissions?submitter=" + str(now['handle']) + "&page=" + str(page), headers = getheader, timeout = GETTIMEOUT,verify=False)
-	except:
-		print("Error No Such Page!")
-	else:
-		selector=etree.HTML(response.text)
-		for i in range(1,11):
-			try:
-				content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[1]/a/text()')[0]
-				submission = []
-				submission.append("UOJ")
+	while True:
+		try:
+			getheader = {
+				"user-agent": UA
+			}
+			response = requests.get("https://uoj.ac/submissions?submitter=" + str(now['handle']) + "&page=" + str(page), headers = getheader, timeout = GETTIMEOUT,verify=False)
+			selector=etree.HTML(response.text)
+			break
+		except:
+			print("Error No Such Page, retrying...")
+			time.sleep(GETERRORFREQ)
+	for i in range(1,11):
+		try:
+			content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[1]/a/text()')[0]
+			submission = []
+			submission.append("UOJ")
+			submission.append(content)
+			content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[4]/a/text()')[0]
+			if(content == "100"):
+				submission.append("Accepted")
 				submission.append(content)
-				content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[4]/a/text()')[0]
-				if(content == "100"):
-					submission.append("Accepted")
-					submission.append(content)
-				elif(content == "Compile Error"):
-					submission.append("Compile Error")
-					submission.append("0")
-				else:
-					submission.append("Unaccepted")
-					submission.append(content)
-				content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[2]/a/text()')[0]
-				submission.append("UOJ"+content)
-				content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[2]/a/@href')[0]
+			elif(content == "Compile Error"):
+				submission.append("Compile Error")
+				submission.append("0")
+			else:
+				submission.append("Unaccepted")
 				submission.append(content)
-				content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[3]/span/text()')[0]
-				submission.append(content)
-				content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[5]/text()')[0]
-				submission.append(content)
-				content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[6]/text()')[0]
-				submission.append(content)
-				content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[7]/a/text()')[0]
-				submission.append(content)
-				content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[1]/a/text()')[0]
-				submission.append("https://uoj.ac/submission/"+content[1:])
-				content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[9]/small/text()')[0]
-				submission.append(time.mktime(time.strptime(content, "%Y-%m-%d %H:%M:%S")))
+			content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[2]/a/text()')[0]
+			submission.append("UOJ"+content)
+			content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[2]/a/@href')[0]
+			submission.append(content)
+			content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[3]/span/text()')[0]
+			submission.append(content)
+			content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[5]/text()')[0]
+			submission.append(content)
+			content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[6]/text()')[0]
+			submission.append(content)
+			content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[7]/a/text()')[0]
+			submission.append(content)
+			content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[1]/a/text()')[0]
+			submission.append("https://uoj.ac/submission/"+content[1:])
+			content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[9]/small/text()')[0]
+			submission.append(time.mktime(time.strptime(content, "%Y-%m-%d %H:%M:%S")))
 
-				submissions.append(submission)
-			except:
-				print("Error No Such Element!")
+			submissions.append(submission)
+		except:
+			print("Error No Such Element!")
 
 def GetColor(status):
 	if(status == "Accepted"):
@@ -272,19 +266,19 @@ def Sort(l,r):
         rk[i+l]=stk[i]
 
 lastGet = 0
+submissions = []
+for i in range(0,len(user)):
+	if (user[i]['type'] == 'codeforces'):
+		GetCodeforces(user[i])
+	elif (user[i]['type'] == 'uoj'):
+		GetUOJ(user[i],1)
+		GetUOJ(user[i],2)
+		GetUOJ(user[i],3)
+rk = []
+for i in range(0,len(submissions)):
+	rk.append(i)
+Sort(0,len(submissions)-1)
 with open("index.html", "w", encoding="utf-8") as file:
-	submissions = []
-	for i in range(0,len(user)):
-		if (user[i]['type'] == 'codeforces'):
-			GetCodeforces(user[i])
-		elif (user[i]['type'] == 'uoj'):
-			GetUOJ(user[i],1)
-			GetUOJ(user[i],2)
-			GetUOJ(user[i],3)
-	rk = []
-	for i in range(0,len(submissions)):
-		rk.append(i)
-	Sort(0,len(submissions)-1)
 	file.write('<!DOCTYPE html><html><head><meta http-equiv="refresh" content="300"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Submission Monitor</title><link rel="shortcut icon" href="./favicon.ico" type="image/x-icon"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdui@1.0.2/dist/css/mdui.min.css" /><link rel="stylesheet" href="monitor.css" /></head><body><div id="app"><div id="header"><div class="header-container"><div class="title">提交记录监视器<div class="subtitle">Submission Monitor</div></div></div></div><div id="monitor" class="container item mdui-card"><div class="mdui-table-fluid"><table class="mdui-table mdui-table-hoverable"><thead><tr><th>平台</th><th>状态</th><th>分数</th><th>题目</th><th>提交者</th><th>用时</th><th>内存</th><th>答案</th><th>提交时间</th></tr></thead><tbody>')
 	for j in range(0,min(SMAX,len(submissions))):
 		i=submissions[rk[j]]
