@@ -132,7 +132,6 @@ def GetUOJ(now,page):
 		print("Error No Such Page!")
 	else:
 		selector=etree.HTML(response.text)
-		print(response.text)
 		for i in range(1,11):
 			try:
 				content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[1]/a/text()')[0]
@@ -162,7 +161,7 @@ def GetUOJ(now,page):
 				content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[7]/a/text()')[0]
 				submission.append(content)
 				content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[1]/a/text()')[0]
-				submission.append("https://uoj.ac/submission/"+content)
+				submission.append("https://uoj.ac/submission/"+content[1:])
 				content=selector.xpath('/html/body/div/div[3]/div[2]/table/tbody/tr[' + str(i) + ']/td[9]/small/text()')[0]
 				submission.append(time.mktime(time.strptime(content, "%Y-%m-%d %H:%M:%S")))
 
