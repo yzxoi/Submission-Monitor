@@ -214,7 +214,10 @@ def Getluogu(now,page):
 		try:
 			submission.append(str(i['score']))
 		except:
-			submission.append(str(0))
+			if(i['status'] == 12):
+				submission.append("100")
+			else:
+				submission.append("0")
 		submission.append(str(i['problem']['pid'])+ " " + i['problem']['title'])
 		submission.append("https://www.luogu.com.cn/problem/"+str(i['problem']['pid']))
 		submission.append(g_user)
