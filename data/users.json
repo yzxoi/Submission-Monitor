@@ -29,5 +29,13 @@
     {
         "type": "uoj",
         "handle": "gongyiheng"
+    },
+    {
+        "type": "luogu",
+        "handle": "yzxoi"
+    },
+    {
+        "type": "luogu",
+        "handle": "275307894a"
     }
 ]
