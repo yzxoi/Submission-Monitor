@@ -12,8 +12,7 @@ MAXCOUNT = 50
 SMAX = 100
 GETTIMEOUT = 20
 GETERRORFREQ = 5
-TimeEquation = 0
-# TimeEquation = 13*3600
+
 Cookie = "_uid=;__client_id="
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"
 
@@ -190,9 +189,6 @@ def Getluogu(now,page):
 		except:
 			print("Error No Such Page, retrying...")
 			time.sleep(GETERRORFREQ)
-	# try:
-	# print(content)
-	# 12:Accepted, 14: Unaccepted, 2: Compile Error
 	data = json.loads(content)
 	for i in data['currentData']['records']['result']:
 		g_user = []
@@ -245,12 +241,9 @@ def Getluogu(now,page):
 		else:
 			submission.append("Unknown" + go)
 		submission.append("https://www.luogu.com.cn/record/"+str(i['id']))
-		# Because luogu will change the time by your location, so you need to add your time equation
-		submission.append(i['submitTime']+TimeEquation)
+		submission.append(i['submitTime'])
 
 		submissions.append(submission)
-	# except:
-		# print("Error No Such Element!")
 
 def GetColor(status):
 	if(status == "Accepted"):
